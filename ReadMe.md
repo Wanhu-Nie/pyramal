@@ -9,146 +9,103 @@
 > - Achieves **99.94% accuracy** on the MalImg dataset and **99.60% accuracy** on the BIG-2015 dataset
 > - Compatible with Android APK and Windows PE formats
 
-------
+---
 
 
 
 ## 📊 Performance Highlights
 
-| Dataset                | Task                             | Accuracy   | Recall | Precision | F1-Score |
-| ---------------------- | -------------------------------- | ---------- | ------ | --------- | -------- |
-| **CICMalDroid2020Det** | Malware Detection                | **98.48%** | 98.05% | 97.74%    | 97.89%   |
-| **BIG-2015**           | Malware Classification           | **99.60%** | 99.57% | 99.55%    | 99.56%   |
-| **CICMalDroid2020Cls** | 4-Class Classification           | **95.79%** | 94.79% | 94.64%    | 94.69%   |
-| **MOTIF-TOP100**       | PE Malware Family Classification | **95.12%** | 94.88% | 94.75%    | 94.80%   |
+| Dataset            | Task                       | Quantity          | Accuracy   | Recall     | Precision  | F1-Score   |
+| ------------------ | -------------------------- | ----------------- | ---------- | ---------- | ---------- | ---------- |
+| CICAndMal2017Det   | Detection, Android APK     | 2,074             | 94.84%     | 91.17%     | 92.84%     | 91.91%     |
+| CICMalDroid2020Det | Detection, Android APK     | 17,242            | 98.48%     | 98.05%     | 97.74%     | 97.89%     |
+| **Malimg**         | Classification, Windows PE | 9,339             | **99.94%** | **99.85%** | **99.89%** | **99.87%** |
+| **BIG-2015**       | Classification, Windows PE | 10,868            | **99.60%** | **99.57%** | **99.55%** | **99.56%** |
+| CICMalDroid2020Cls | Classification Android APK | 13,202            | 95.79%     | 94.79%     | 94.64%     | 94.69%     |
+| MOTIF-TOP50        | Classification, Windows PE | top50 from 3,095  | 85.22%     | 83.99      | 84.92%     | 82.64%     |
+| MOTIF-TOP100       | Classification, Windows PE | top100 from 3,095 | 80.94%     | 78.89%     | 76.73%     | 75.99%     |
 
 *(See paper for full results and confusion matrices)*
 
-------
+
 
 ## 🛠️ Installation
 
-### Prerequisites
+### 📃 Prerequisites
 
 - Python ≥ 3.8
-- PyTorch ≥ 1.12
-- NumPy, scikit-learn, matplotlib, tqdm
+- PyTorch (with CUDA support, if available)
+- TorchVision, TorchMetrics
+- NumPy, Pandas, Pillow , scikit-learn, tqdm
 
-### Setup
 
 
+### 📦 Setup
+
+Clone Repository:
 
 ```
-1git clone https://github.com/yourname/pyramal.git
-2cd pyramal
-3pip install -r requirements.txt
+git clone https://github.com/Wanhu-Nie/pyramal.git
+cd pyramal
+pip install -r requirements.txt
 ```
 
-------
+
 
 ## 🚀 Quick Start
 
 ### 1. Prepare Dataset
 
-
-
-
-
-```
-1data/
-2├── train/
-3│   ├── malware/
-4│   └── benign/
-5└── test/
-6    ├── malware/
-7    └── benign/
-```
+Run `makrifle.py` to convert binary files into RGB images for CNN-based image recognition. You need to provide the binary file directory and the output image path.
 
 > 💡 Supported formats: `.apk`, `.exe`, `.dll`, or any raw binary file.
 
-### 2. Train the Model
+
+
+### 2. Train / Evaluate the Model
+
+Run `pyramal.py` and specify the relevant parameters for model training (such as dataset, number of cross-validation folds, epochs, batch size, learning rate, etc.) to perform model training and evaluation. The default example uses the Malimg dataset, employs 10-fold cross-validation, and sets a fixed random seed (seed=42) for the training and evaluation process. The training process is illustrated in Figure X, where the performance of the model is validated against the test set and reported after each epoch.
+
+<img src="figures/malimg-train.png" alt="malimg-train" style="zoom: 60%;" align='left'/>
 
 
 
-```
-1python train.py \
-2  --data_dir ./data/train \
-3  --model_save_path ./models/pyramal.pth \
-4  --epochs 50 \
-5  --batch_size 64
-```
+In the paper, the high-resolution confusion matrix of PyraMal on the Malimg dataset is shown below: 
 
-### 3. Evaluate / Predict
+<img src="figures/confusion_atrix_of_malimg.png" alt="malimg-train" style="zoom:100%;" align='left'/>
 
 
-
-
-
-
-
-
-
-```
-1python evaluate.py \
-2  --model_path ./models/pyramal.pth \
-3  --test_dir ./data/test
-```
-
-Or classify a single file:
-
-
-
-
-
-```
-1python predict.py --file sample.apk --model ./models/pyramal.pth
-2# Output: MALWARE (confidence: 0.987)
-```
-
-------
 
 ## 🧠 Method Overview
 
-PyraMal converts raw binary sequences into **multi-scale pyramid feature maps** that preserve structural patterns across byte-level, block-level, and file-level granularities. This avoids:
+PyraMal is a malware visualization framework featuring a pyramid-structured feature distribution. It treats raw binary bytes as a Markov chain, computes the State Transition Frequency Matrix (STFM), and applies the DT-LHTA algorithm to construct RGB images for malware detection and classification. By operating directly on binary bytes, PyraMal achieves strong cross-platform compatibility, thereby avoiding:
 
 - Parsing failures in obfuscated/malformed samples
 - Dependency on volatile features (e.g., API calls, permissions)
 - Image distortion from fixed-size resizing
 
-The model uses a lightweight CNN backbone optimized for pyramid inputs, ensuring efficiency and scalability.
+![PyraMal Framework](figures/pyramal.png)
 
 
 
-![PyraMal Framework](ReadMe.assets/framework.png)
+## 📁 Project Structure
 
-*Figure: Overview of the PyraMal pipeline (see paper Fig. 2)*
+```
+pyramal/
+├── makefile.py                 # Converts raw binary files into RGB images using STFM and DT-LHTA
+├── pyramal.py                  # Training and evaluation script for the PyraMal model
+├── datasets/                   # Dataset metadata: lists of sample filenames and their labels
+│   └── malimg.csv
+|	...
+├── results/                    # Stores evaluation outputs
+├── requirements.txt            # Python dependencies
+├── LICENSE                     # Open-source license (MIT)
+└── README.md                   # Project overview and quick start guide
+```
 
 
-
-------
 
 ## 📄 License
 
 This project is licensed under the **MIT License** — see LICENSE for details.
 
-------
-
-## 🙌 Acknowledgements
-
-- Datasets: CICMalDroid2020, BIG-2015, MOTIF
-- Inspired by vision-based malware analysis, but designed for **robustness over convenience**
-
-------
-
-## ❓ Questions or Contributions?
-
-Feel free to open an issue or submit a pull request! We welcome:
-
-- New dataset support
-- Model optimizations
-- Visualization tools
-- Docker deployment scripts
-
-------
-
-> ⚠️ **Disclaimer**: This tool is for **academic and defensive cybersecurity research only**. Do not use on systems you do not own or without proper authorization.
